@@ -1,0 +1,139 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import 'tailwindcss';
+
+:root {
+  --background: #fffdf9;
+  --foreground: #163042;
+  --card: rgba(255, 255, 255, 0.88);
+  --muted-foreground: #5e7383;
+  --border: rgba(148, 163, 184, 0.2);
+  --border-strong: rgba(148, 163, 184, 0.32);
+  --primary: #147a7b;
+  --primary-strong: #0f6666;
+  --primary-foreground: #f8fffe;
+  --secondary: rgba(20, 122, 123, 0.1);
+  --secondary-strong: rgba(20, 122, 123, 0.28);
+  --secondary-foreground: #106060;
+  --accent: #ef7b45;
+  --accent-soft: rgba(239, 123, 69, 0.15);
+  --accent-foreground: #9a3e14;
+  --success-soft: rgba(34, 197, 94, 0.16);
+  --success-foreground: #166534;
+  --ring: rgba(20, 122, 123, 0.5);
+  --ring-soft: rgba(20, 122, 123, 0.15);
+  --font-sans-stack: 'Plus Jakarta Sans', ui-sans-serif, sans-serif;
+  --font-display-stack: 'Fraunces', ui-serif, serif;
+}
+
+@theme inline {
+  --font-sans: var(--font-sans-stack);
+  --font-display: var(--font-display-stack);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans-stack);
+  color: var(--foreground);
+  background: var(--background);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(20, 122, 123, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20, 122, 123, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(circle at center, black 28%, transparent 85%);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(239, 123, 69, 0.22);
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes step-in-forward {
+  from {
+    opacity: 0;
+    transform: translateX(16px) translateY(4px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+  }
+}
+
+@keyframes step-in-backward {
+  from {
+    opacity: 0;
+    transform: translateX(-16px) translateY(4px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+  }
+}
+
+@keyframes copy-pop {
+  0% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: scale(1.04);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes orb-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(0, -12px, 0);
+  }
+}
