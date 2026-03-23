@@ -1,218 +1,347 @@
-# PromptLab
+# PromptLab Phase 2
 
-**PromptLab** is a frontend-only web app for building better AI prompts through structured input.
+PromptLab is now a full-stack AI prompt workspace. Phase 2 moves the project from a frontend-only prompt builder to an API-first SaaS foundation with authentication, project workspaces, prompt versioning, document uploads, JSON-driven templates, provider routing, prompt analysis, and basic compare mode.
 
-Instead of asking users to know prompt engineering principles in advance, PromptLab guides them through the right questions and turns their answers into a clear, reusable, high-quality prompt.
+This phase intentionally does **not** include billing, subscriptions, teams, or vector search. The codebase is structured so those can be added in Phase 3 without reworking the core domain model.
 
-It is designed for two audiences:
+## Overview
 
-- **non-technical users** who want better AI results without learning prompt engineering from scratch
-- **faster-moving power users** who want a compact interface for assembling strong prompts quickly
+### What works in this skeleton
 
-## What it does
+- SPA auth with Laravel Sanctum personal access tokens
+- Prompt projects with create, update, duplicate, archive, compile, and detail workspace
+- Prompt versions with restore flow
+- JSON-driven prompt templates and template editor
+- Document upload library plus parse/chunk pipeline scaffold
+- RAG-lite context assembly from attached document chunks
+- Provider abstraction for OpenAI, Anthropic, and Gemini
+- Structured AI prompt analysis with saved suggestions and rewrite application
+- Prompt run history
+- Basic compare mode
+- Snippet library
+- Docker-ready monorepo layout
 
-PromptLab helps users move from a rough idea to a more reliable prompt by combining:
+### Main architecture decisions
 
-- guided input
-- rule-based prompt generation
-- heuristic quality scoring
-- lightweight efficiency insights
-- actionable suggestions when important context is missing
+- **Laravel 13 API**: Laravel 13 was installed from the current stable skeleton in this environment. The user asked for Laravel 12 preferred; the resulting implementation uses Laravel 13 because that is what Composer resolved locally.
+- **Sanctum token auth**: For local SPA development and simple production readiness, the frontend uses bearer tokens instead of session/cookie auth. This avoids CSRF setup complexity in Phase 2.
+- **JSON template engine**: Templates live in the database with `schema_json`, `prompt_blocks_json`, and `provider_hints_json`. The frontend renders forms from schema, while the backend compiles prompts from blocks and runtime context.
+- **RAG-lite instead of vector DB**: Uploaded documents are parsed and chunked, then ranked with simple keyword matching when compiling prompts.
+- **Provider registry**: Models are seeded into `model_registries`, so model labels and IDs are not hardcoded across the UI.
+- **Owner-based access control**: Phase 2 assumes a single-user workspace model. Team permissions are intentionally deferred.
 
-The MVP is intentionally **frontend-only** and **not AI-powered**. It does not call an LLM to optimize prompts. Instead, it uses structured forms, templates, and heuristics to produce better prompts in a predictable and transparent way.
+## Monorepo Structure
 
-## Core features
-
-### Basic mode
-
-A friendly multi-step wizard for non-technical users.
-
-Includes:
-
-- up to 5 simple steps
-- guided microcopy and examples
-- predefined options where possible
-- live review before prompt generation
-- low-friction UX designed to feel approachable and playful
-
-### Advanced mode
-
-A compact single-screen form for users who want more control and speed.
-
-Includes:
-
-- denser layout
-- more free-text inputs
-- tooltips and helper text for every key field
-- greater flexibility over prompt structure
-
-### Rule-based prompt generation
-
-PromptLab generates two prompt variants:
-
-- **Full Prompt** — more explicit, more context-rich
-- **Compact Prompt** — shorter version for faster copy/paste use
-
-Generation is based on form data + predefined templates, not AI rewriting.
-
-### Prompt Quality Score
-
-A heuristic score that estimates how well-defined the prompt is.
-
-Current scoring dimensions:
-
-- goal clarity
-- context completeness
-- audience definition
-- task specificity
-- constraints
-- tone/style definition
-- output format clarity
-- input material richness
-
-### Efficiency Insights
-
-A lightweight dashboard that estimates likely improvement from better prompt structure.
-
-Includes:
-
-- structure improvement
-- estimated retry reduction
-- estimated token efficiency gain
-- completeness
-
-> These are **heuristic indicators**, not real measurements of model energy consumption or API token billing.
-
-### Suggestions engine
-
-PromptLab highlights missing pieces that would likely improve output quality, for example:
-
-- add more context
-- define the audience
-- specify the output format
-- add constraints
-- choose a tone
-
-## Tech stack
-
-- **React**
-- **TypeScript**
-- **Vite**
-- **Tailwind CSS**
-- **shadcn-style UI primitives**
-- **React Hook Form**
-- **Zod**
-- **Lucide React**
-
-## Local development
-
-Install dependencies:
-
-```bash
-npm install
+```text
+/promptlab-phase2
+  /apps
+    /frontend        React + TypeScript + Vite SPA
+    /backend         Laravel API
+  /infra
+    docker-compose.yml
+    /backend
+    /frontend
+  /packages
+    /shared-types
+    /template-schemas
+  README.md
 ```
 
-Run the dev server:
+### Frontend structure
+
+```text
+apps/frontend/src
+  /app
+  /components
+    /layout
+    /ui
+  /features
+    /analysis
+    /auth
+    /builder
+    /projects
+    /snippets
+    /templates
+  /lib
+    /api
+    /template
+  /routes
+  /stores
+  /types
+```
+
+### Backend structure
+
+```text
+apps/backend
+  /app
+    /Enums
+    /Http
+      /Controllers/Api
+      /Requests
+      /Resources
+    /Jobs
+    /Models
+    /Services
+      /AI
+      /Documents
+      /Prompts
+      /Providers
+      /Templates
+    /Support
+  /database
+    /migrations
+    /seeders
+      /Data
+  /routes
+    api.php
+```
+
+## Core Domain
+
+### Main models
+
+- `prompt_projects`
+- `prompt_versions`
+- `prompt_runs`
+- `prompt_templates`
+- `documents`
+- `document_chunks`
+- `project_documents`
+- `prompt_analyses`
+- `analysis_suggestions`
+- `snippets`
+- `model_registries`
+- `activity_logs`
+- `saved_compares`
+
+### Notable services
+
+- `TemplateRenderService`
+- `ProjectContextAssemblerService`
+- `PromptBuildService`
+- `PromptVersionService`
+- `DocumentParsingService`
+- `ProviderRouterService`
+- `PromptAnalysisService`
+- `PromptExecutionService`
+
+## Local Setup
+
+### Prerequisites
+
+- Node.js 22+
+- npm 10+
+- PHP 8.3+
+- Composer 2+
+- PostgreSQL 16+
+- Redis 7+
+
+### 1. Backend setup
 
 ```bash
+cd apps/backend
+cp .env.example .env
+composer install
+php artisan key:generate
+php artisan migrate:fresh --seed
+php artisan storage:link
+php artisan serve
+```
+
+Optional queue worker:
+
+```bash
+cd apps/backend
+php artisan queue:work
+```
+
+### 2. Frontend setup
+
+```bash
+cd apps/frontend
+cp .env.example .env
+npm install
 npm run dev
 ```
 
-## Production build
+By default the Vite dev server proxies `/api` requests to `http://localhost:8000`.
 
-Create a production build:
+### 3. Demo account
 
-```bash
-npm run build
-```
+- Email: `demo@promptlab.test`
+- Password: `PromptLab123`
 
-Preview the build locally:
+## Docker Setup
 
-```bash
-npm run preview
-```
+Docker assets live under [`infra/docker-compose.yml`](/Users/dmijic/Desktop/moje aplikacije/Aplikacije/PromptLab/infra/docker-compose.yml).
 
-## Linting
+### Start the stack
 
 ```bash
-npm run lint
+cd infra
+docker compose up --build
 ```
 
-## Project structure
+### Containers included
 
-```text
-src/
-  components/
-    ui/           # shadcn-style UI primitives
-    forms/        # small reusable form helpers
-    *.tsx         # feature components and layout
-  lib/
-    constants.ts
-    prompt-engine.ts
-    schema.ts
-    utils.ts
-  types/
-    prompt.ts
-  App.tsx
-  index.css
-  main.tsx
+- `app-backend`
+- `nginx`
+- `frontend`
+- `postgres`
+- `redis`
+- `mailpit`
+
+### Docker follow-up commands
+
+Run backend dependencies and setup inside containers:
+
+```bash
+docker compose exec app-backend sh
+cd /var/www/apps/backend
+cp .env.example .env
+composer install
+php artisan key:generate
+php artisan migrate:fresh --seed
+php artisan storage:link
+php artisan queue:work
 ```
 
-## How PromptLab works
+This Docker stack is the intended deployment path for VPS hosting. Shared-hosting/cPanel packaging has been removed from the repo.
 
-PromptLab collects structured user input such as:
+## Environment Variables
 
-- prompt type
-- objective
-- context
-- audience
-- tone
-- output format
-- constraints
+### Backend
 
-It then:
+Use [`apps/backend/.env.example`](/Users/dmijic/Desktop/moje aplikacije/Aplikacije/PromptLab/apps/backend/.env.example) as the source of truth.
 
-1. assigns or derives a suitable role
-2. normalizes missing task instructions where possible
-3. builds a full prompt template
-4. builds a compact prompt variant
-5. calculates a heuristic quality score
-6. estimates likely efficiency improvement
-7. suggests missing elements that would strengthen the prompt
+Important groups:
 
-## Design principles
+- App: `APP_URL`, `APP_FRONTEND_URL`
+- Database: `DB_*`
+- Redis: `REDIS_*`
+- Queue/cache: `QUEUE_CONNECTION`, `CACHE_STORE`
+- Filesystem: `FILESYSTEM_DISK`
+- AI: `AI_DEFAULT_PROVIDER`, `OPENAI_*`, `ANTHROPIC_*`, `GEMINI_*`
 
-The MVP is built around these principles:
+### Frontend
 
-- **clarity over magic** — users should understand why the prompt is better
-- **structure over guesswork** — better inputs create better outputs
-- **friendly for beginners** — simple onboarding through form design
-- **fast for advanced users** — compact mode for power users
-- **future-proof architecture** — ready for accounts, saved history, backend APIs, and model-specific adaptations
+Use [`apps/frontend/.env.example`](/Users/dmijic/Desktop/moje aplikacije/Aplikacije/PromptLab/apps/frontend/.env.example).
 
-## Current limitations
+- `VITE_API_BASE_URL`
+- `VITE_API_PROXY_TARGET`
+- `VITE_BUILD_BASE`
+- `VITE_ROUTER_BASENAME`
 
-- no authentication
-- no saved prompt history
-- no backend or database
-- no direct integration with ChatGPT, Claude, Gemini, Copilot, or Perplexity
-- no landing page in the current MVP
-- no real token billing or energy measurement
+## Seed Data
 
-## Planned phase 2
+Seeding creates:
 
-Planned future upgrades include:
+- 1 demo user
+- 6 system templates
+- seeded provider/model registry entries
+- reusable snippets
+- 2 demo prompt projects
+- 3 demo documents with chunks
+- prompt versions
+- 1 sample analysis
+- 1 sample run
 
-- authentication
-- saved prompt history
-- favorites / reusable prompt library
-- model-specific prompt adaptation
-- direct integrations with major AI tools
-- landing page and public product marketing site
-- analytics and team/workspace features
+Template catalog lives in [`SystemTemplateCatalog.php`](/Users/dmijic/Desktop/moje aplikacije/Aplikacije/PromptLab/apps/backend/database/seeders/Data/SystemTemplateCatalog.php).
 
-## Notes
+## API Surface
 
-- Prompt generation is **rule-based**, not AI-powered.
-- Efficiency metrics are **heuristic approximations** intended to communicate likely gains in clarity and iteration efficiency.
-- The current structure is intentionally ready for future additions such as auth, saved history, backend APIs, and model-specific prompt adaptations.
+Implemented routes include:
+
+- Auth: register, login, logout, me
+- Projects: list, create, detail, update, delete, duplicate, archive, compile
+- Versions: list, restore
+- Templates: list, create, show, update, delete, clone, system list
+- Documents: list, upload, show, delete, chunks, project attach/detach/settings
+- Analysis: analyze, list, show, apply rewrite
+- Runs: run prompt, list runs
+- Compare: compare prompt output across two provider/model pairs
+- Snippets: list, create, update, delete
+- Models: list active models, list providers
+
+## Prompt Template Engine
+
+Templates define:
+
+- `schema_json`
+- `prompt_blocks_json`
+- `provider_hints_json`
+
+Supported field types in this scaffold:
+
+- `text`
+- `textarea`
+- `select`
+- `multi_select`
+- `tags`
+- `radio`
+- `checkbox`
+- `switch`
+
+Supported UI/runtime behaviors:
+
+- defaults
+- required flags
+- help text
+- conditional fields via `show_when`
+- prompt block conditions via `enabled_when`
+- output format and language support
+- provider hints
+
+## Document Parsing
+
+Implemented parser abstraction:
+
+- `TxtParser`
+- `MarkdownParser`
+- `PdfParser`
+- `DocxParser`
+
+Pipeline:
+
+1. upload file
+2. store on Laravel public disk
+3. dispatch `ParseDocumentJob`
+4. parse text
+5. normalize and chunk text
+6. persist `document_chunks`
+
+## AI Providers
+
+Implemented adapters:
+
+- `OpenAIProvider`
+- `AnthropicProvider`
+- `GeminiProvider`
+
+Placeholders in the registry are seeded for future support:
+
+- Mistral
+- Groq
+- Ollama
+
+The provider layer is intentionally centralized under `ProviderRouterService`, so future model-specific adaptation can sit behind the same contract.
+
+## Current Limitations
+
+- Prompt analysis and generation are synchronous HTTP calls for now.
+- No billing, subscription, quota, or usage metering.
+- No teams, invites, or advanced authorization rules beyond resource ownership.
+- No embeddings or vector database yet.
+- Template editor is JSON-first, not a visual builder.
+- Compare result “best side” is local UI state plus persisted initial compare payload, not a full benchmark workflow.
+- Password reset is not fully wired into the SPA UI yet; only the foundation is ready for extension.
+
+## Next Steps
+
+- Move AI analysis and run flows to queued jobs with polling/websocket updates
+- Add saved compare review screens
+- Persist snippet selections separately from project draft payload
+- Add richer template editor UX
+- Add test coverage for compile, analyze, and provider routing
+- Add billing, usage limits, and provider governance in Phase 3
